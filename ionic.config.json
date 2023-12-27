@@ -1,7 +1,0 @@
-{
-  "name": "RapidLinks",
-  "integrations": {
-    "capacitor": {}
-  },
-  "type": "react-vite"
-}
