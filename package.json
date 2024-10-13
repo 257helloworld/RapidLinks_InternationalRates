@@ -1,7 +1,7 @@
 {
   "name": "RapidLinks",
   "private": true,
-  "version": "0.0.1",
+  "version": "1.10",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -53,5 +53,5 @@
     "vite": "^5.0.0",
     "vitest": "^0.34.6"
   },
-  "description": "An Ionic project"
+  "description": "Rapid Links International Rates Calculator"
 }
