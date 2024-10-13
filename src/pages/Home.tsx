@@ -4,10 +4,8 @@ import {
   IonCard,
   IonCardContent,
   IonCardHeader,
-  IonCardSubtitle,
   IonCardTitle,
   IonContent,
-  IonGrid,
   IonHeader,
   IonIcon,
   IonInput,
@@ -18,7 +16,6 @@ import {
   IonMenuButton,
   IonModal,
   IonPage,
-  IonRow,
   IonSelect,
   IonSelectOption,
   IonText,
@@ -26,14 +23,12 @@ import {
   IonToolbar,
 } from "@ionic/react";
 import React, { useEffect, useRef, useState } from "react";
-import { doc, getDocs, collection, onSnapshot } from "firebase/firestore";
-import { Storage } from "@ionic/storage";
-import db from "./firebase";
-import getCountries from "../functions/getCountries";
+import { collection } from "firebase/firestore";
+import db from "../services/firebase";
 
 import "./Home.css";
 
-import { checkmarkCircle, settingsOutline } from "ionicons/icons";
+import { settingsOutline } from "ionicons/icons";
 // import { useStorage } from "../../hooks/useStorage";
 import AppTypeahead from "../components/AppTypeAhead";
 
@@ -43,9 +38,11 @@ const Home: React.FC = () => {
   const [weight, setWeight] = useState(0);
   const [ceilWeight, setCeilWeight] = useState(0);
   const [selectedValue, setSelectedValue] = useState<string>();
+  const [isButtonEnabled, setIsButtonEnabled] = useState<boolean>(true);
   const [countries, setCountries] = useState<any>();
-
-  const collectionRef = collection(db, "fuel");
+  const [parcelType, setParcelType] = useState<"Dox" | "NDox">("Dox");
+  const [isWeightValid, setIsWeightValid] = useState<boolean>(true);
+  const [weightErrorMessage, setWeightErrorMessage] = useState<string>("");
 
   const modal = useRef<HTMLIonModalElement>(null);
   const weightInput = useRef<HTMLIonInputElement>(null);
@@ -72,23 +69,36 @@ const Home: React.FC = () => {
   }, [selectedValue]);
 
   const handleWeightInput = (e: any) => {
-    setWeight(e.target.value);
-    setCeilWeight(Math.ceil(e.target.value));
-    localStorage.setItem("ceilWeight", Math.ceil(e.target.value).toString());
-    localStorage.setItem("weight", e.target.value);
+    validateWeight(parcelType, e.target.value);
+    let weight = e.target.value;
+    setWeight(weight);
+    setCeilWeight(Math.ceil(weight));
+    localStorage.setItem("ceilWeight", Math.ceil(weight).toString());
+    localStorage.setItem("weight", weight);
   };
+
+  const validateWeight = (parcelType: string, weight: number) => {
+    if (parcelType == "NDox" || (parcelType == "Dox" && weight <= 2)) {
+      setIsWeightValid(true);
+    } else {
+      setIsWeightValid(false);
+      setWeightErrorMessage("Weight must be below or equal to 2 Kgs for Dox.");
+    }
+  };
+
+  useEffect(() => {
+    setIsButtonEnabled(isWeightValid);
+  }, [isWeightValid]);
 
   return (
     <>
       <IonMenu contentId="main-content">
         <IonHeader>
           <IonToolbar>
-            <IonTitle>Menu Content</IonTitle>
+            <IonTitle></IonTitle>
           </IonToolbar>
         </IonHeader>
-        <IonContent className="ion-padding">
-          This is the menu content.
-        </IonContent>
+        <IonContent className="ion-padding">Version. 1.10</IonContent>
       </IonMenu>
 
       <IonPage id="main-content">
@@ -97,8 +107,8 @@ const Home: React.FC = () => {
             <IonButtons slot="start">
               <IonMenuButton></IonMenuButton>
             </IonButtons>
-            <IonTitle>Rapid Links</IonTitle>
-            <IonButtons slot="secondary">
+            <IonTitle>Rate Calculator</IonTitle>
+            <IonButtons style={{ display: "none" }} slot="secondary">
               <IonButton routerLink="/settings">
                 <IonIcon slot="icon-only" icon={settingsOutline}></IonIcon>
               </IonButton>
@@ -123,6 +133,32 @@ const Home: React.FC = () => {
               </IonList>
             </IonCardContent>
           </IonCard>
+
+          {selectedCountry && (
+            <IonCard className="cards" style={{ marginTop: "20px" }}>
+              <IonCardHeader className="cardHeader">
+                <IonCardTitle>Select Parcel Type</IonCardTitle>
+              </IonCardHeader>
+              <IonCardContent>
+                <IonItem className="parcelTypeItem">
+                  <IonLabel>Type</IonLabel>
+                  <IonSelect
+                    interface="popover"
+                    value={parcelType}
+                    slot="end"
+                    onIonChange={(e) => {
+                      setParcelType(e.detail.value);
+                      validateWeight(e.detail.value, weight);
+                    }}
+                  >
+                    <IonSelectOption value="Dox">Dox</IonSelectOption>
+                    <IonSelectOption value="NDox">Non-Dox</IonSelectOption>
+                  </IonSelect>
+                </IonItem>
+              </IonCardContent>
+            </IonCard>
+          )}
+
           {selectedCountry && (
             <IonCard className="cards" style={{ marginTop: "20px" }}>
               <IonCardHeader className="cardHeader">
@@ -143,13 +179,19 @@ const Home: React.FC = () => {
                   <IonItem lines="none">
                     <p id="weightHelperText">Actual weight: {weight} KGs</p>
                   </IonItem>
+                  {!isWeightValid && (
+                    <IonItem lines="none">
+                      <p id="weightErrorMessage">{weightErrorMessage}</p>
+                    </IonItem>
+                  )}
                 </IonList>
                 {weight > 0 && (
                   <IonButton
                     shape="round"
                     id="resetButton"
                     expand="block"
-                    routerLink="/rates"
+                    routerLink={`/rates/${parcelType}`}
+                    disabled={!isButtonEnabled}
                   >
                     Get Rates
                   </IonButton>

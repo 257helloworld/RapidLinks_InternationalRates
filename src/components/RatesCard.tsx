@@ -2,33 +2,41 @@ import {
   IonAlert,
   IonBadge,
   IonButton,
+  IonButtons,
   IonCard,
   IonCardContent,
   IonCardHeader,
   IonCardTitle,
   IonCol,
+  IonContent,
   IonGrid,
+  IonHeader,
   IonIcon,
   IonInput,
   IonItem,
   IonLabel,
   IonList,
   IonLoading,
+  IonModal,
   IonNote,
   IonRow,
   IonSkeletonText,
   IonText,
+  IonTitle,
   IonToggle,
+  IonToolbar,
   useIonToast,
 } from "@ionic/react";
-import { createOutline } from "ionicons/icons";
+import { createOutline, informationCircleOutline } from "ionicons/icons";
 import React, { useEffect, useState } from "react";
 import getRates from "../functions/getRates";
 import getFuel from "../functions/getFuel";
 import setFuel from "../functions/setFuel";
+import "./RatesCard.css";
 
 interface RatesCardProps {
   showGst: boolean;
+  parcelType: string;
 }
 
 const RatesCard: React.FC<RatesCardProps> = (props) => {
@@ -48,24 +56,79 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
   const [oldFuel, setOldFuel] = useState<any>(0);
   const [fuelUpdateLoading, setFuelUpdateLoading] = useState<any>(false);
   const [fuelUpdateMessage, setFuelUpdateMessage] = useState<any>("");
+  const [details, setDetails] = useState<any>();
+  const [fuelPercentage, setFuelPercentage] = useState<number>();
+  const [commissionPercentage, setCommissionPercentage] = useState<any>();
+  const [demandSurchargePerKg, setDemandSurchargePerKg] = useState<number>();
+  const [greenTaxPerKg, setGreenTaxPerKg] = useState<number>();
 
   let oneLakh = 100000;
 
   let loop = [1, 2, 3, 4];
 
-  const fetchRates = async (n: any, w: any, z: any, per: any) => {
+  const fetchRates = async (
+    network: string,
+    weight: number,
+    zone: string,
+    fuelPercentage: number,
+    highestWeight: number,
+    parcelType: string
+  ) => {
     try {
-      let record = await getRates(n, w, z);
+      let record = await getRates(
+        network,
+        weight,
+        zone,
+        highestWeight,
+        parcelType
+      );
+      weight = Math.ceil(weight);
       if (record) {
-        let baseRate: any = record.fields[z];
-        const chargeableWeight = record.fields.Weight;
-        const fuelCharge = (per * baseRate) / 100;
-        const rate = fuelCharge + baseRate;
-        const gstRate = rate + (rate * 18) / 100;
+        // Get Base Freight Charges from Airtable
+        let baseRate: number = record.fields[zone];
+        let chargeableWeight: number | undefined = record.fields.Weight;
+        if (record.fields.isMultiplier && chargeableWeight !== undefined) {
+          baseRate = baseRate * weight;
+        }
+        // Add 27% Commission
+        setCommissionPercentage(27);
+        let commission = (baseRate * 27) / 100;
+        let baseRateCommissioned = baseRate + commission;
+
+        // Calculate Fuel Charge
+        setFuelPercentage(fuelPercentage);
+        const fuelCharge = (fuelPercentage * baseRateCommissioned) / 100;
+        let fuelBaseRateCommissioned = fuelCharge + baseRateCommissioned;
+
+        // Add Demand Surcharge
+        const demandSurchargePerKg = Number(
+          localStorage.getItem("DemandSurcharge_PerKg") || "0"
+        );
+        setDemandSurchargePerKg(demandSurchargePerKg);
+        const demandSurcharge = demandSurchargePerKg * (weight ?? 0);
+        fuelBaseRateCommissioned += demandSurcharge;
+
+        // Add Green Tax
+        const greenTax = Number(localStorage.getItem("GreenTax") || "0");
+        let greenTaxCharge = weight * greenTax;
+        setGreenTaxPerKg(greenTax);
+        fuelBaseRateCommissioned += greenTaxCharge;
+
+        // Add GST
+        const gstRate =
+          fuelBaseRateCommissioned + (fuelBaseRateCommissioned * 18) / 100;
         return {
           BaseRate: baseRate,
+          CommissionPercentage: commissionPercentage,
+          Commission: commission,
+          FuelPercentage: fuelPercentage,
+          FuelCharge: fuelCharge,
+          DemandSurchargePerKg: demandSurchargePerKg,
+          DemandSurcharge: demandSurcharge,
+          GreenTaxPerKg: greenTaxPerKg,
+          GreenTax: greenTaxCharge,
           ChargeableWeight: chargeableWeight,
-          Rate: parseFloat(rate.toFixed(2)),
+          Rate: parseFloat(fuelBaseRateCommissioned.toFixed(2)),
           GstRate: parseFloat(gstRate.toFixed(2)),
         };
       }
@@ -86,9 +149,11 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
         fuel.map(async (item: any) => {
           const details = await fetchRates(
             item.fields.Network,
-            localStorage.getItem("weight"),
-            localStorage.getItem("selectedCountryZone"),
-            item.fields.Percentage
+            Number(localStorage.getItem("weight") || "0"),
+            localStorage.getItem("selectedCountryZone") || "",
+            item.fields.FuelPercentage,
+            item.fields.HighestWeight,
+            props.parcelType
           );
           data.push({
             ...item,
@@ -129,7 +194,7 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
 
   const handleFuelEdit = (e: any) => {
     setEditingNetwork(e.Network);
-    setOldFuel(e.Percentage);
+    setOldFuel(e.FuelPercentage);
     setIsFuelChangeOpen(true);
     console.log(e);
   };
@@ -168,6 +233,10 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
     }
   };
 
+  const handleDetails = (data: any) => {
+    setDetails(data.details);
+  };
+
   return (
     <>
       <IonCard className="cards" id="ratesCard">
@@ -177,11 +246,8 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
           color={"primary"}
           className="cardHeader"
         >
-          {props.showGst ? (
-            <IonText>Base Rates + Fuel + GST</IonText>
-          ) : (
-            <IonText>Base Rates + Fuel</IonText>
-          )}
+          <IonText>Parcel Type: {props.parcelType}</IonText>
+
           <IonCardTitle style={{}}>
             {selectedCountry || "Not Selected"} ({weight} Kgs)
           </IonCardTitle>
@@ -204,6 +270,7 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
                 <IonCol>Network</IonCol>
                 <IonCol>Fuel</IonCol>
                 <IonCol>Rates</IonCol>
+                <IonCol>Details</IonCol>
               </IonItem>
 
               {/* Skeleton View */}
@@ -229,7 +296,7 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
                       }}
                       key={rate.fields.Network}
                     >
-                      <IonCol>
+                      <IonCol style={{ flex: "2" }}>
                         {rate.fields.Network}
                         <br />
                         <IonBadge
@@ -242,8 +309,8 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
                         </IonBadge>
                       </IonCol>
 
-                      <IonCol>
-                        {rate.fields.Percentage}%<br />
+                      <IonCol style={{ flex: "1" }}>
+                        {rate.fields.FuelPercentage}%<br />
                         <IonButton
                           fill={"clear"}
                           onClick={() => handleFuelEdit(rate.fields)}
@@ -256,7 +323,7 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
                       </IonCol>
 
                       {props.showGst ? (
-                        <IonCol style={{}}>
+                        <IonCol style={{ flex: "2" }}>
                           ₹{" "}
                           {rate.fields.details.GstRate.toLocaleString("en-IN")}
                           <br />
@@ -271,7 +338,7 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
                           </IonBadge>
                         </IonCol>
                       ) : (
-                        <IonCol>
+                        <IonCol style={{ flex: "2" }}>
                           ₹ {rate.fields.details.Rate.toLocaleString("en-IN")}
                           <br />
                           <IonBadge
@@ -285,6 +352,18 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
                           </IonBadge>
                         </IonCol>
                       )}
+
+                      <IonCol style={{ flex: "1" }}>
+                        <IonButton
+                          fill={"clear"}
+                          onClick={() => handleDetails(rate.fields)}
+                        >
+                          <IonIcon
+                            color="success"
+                            icon={informationCircleOutline}
+                          ></IonIcon>
+                        </IonButton>
+                      </IonCol>
                     </IonItem>
                   ))}
                 </>
@@ -346,6 +425,88 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
         isOpen={fuelUpdateLoading}
         message={fuelUpdateMessage}
       ></IonLoading>
+
+      <IonModal
+        isOpen={!!details}
+        onDidDismiss={() => setDetails(undefined)}
+        breakpoints={[0, 0.5, 0.75, 1.0]}
+        initialBreakpoint={0.75}
+      >
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Rate Details</IonTitle>
+            <IonButtons slot="end">
+              <IonButton onClick={() => setDetails(undefined)}>Close</IonButton>
+            </IonButtons>
+          </IonToolbar>
+        </IonHeader>
+
+        <IonContent className="modalContent">
+          {details && (
+            <IonGrid className="detailsGrid">
+              <IonRow>
+                <IonCol>
+                  {selectedCountry} - {weight} Kgs
+                </IonCol>
+                <IonCol className="valueCol">Value</IonCol>
+              </IonRow>
+              <IonRow>
+                <IonCol className="nameCol">Base Rate</IonCol>
+                <IonCol className="valueCol">
+                  ₹{details.BaseRate.toLocaleString("en-IN")}
+                </IonCol>
+              </IonRow>
+              <IonRow>
+                <IonCol className="nameCol">
+                  Commission ({details.CommissionPercentage}%)
+                </IonCol>
+                <IonCol className="valueCol">
+                  (+) ₹{details.Commission.toLocaleString("en-IN")}
+                </IonCol>
+              </IonRow>
+              <IonRow>
+                <IonCol className="nameCol">
+                  Fuel Charge ({details.FuelPercentage}%)
+                </IonCol>
+                <IonCol className="valueCol">
+                  (+) ₹{details.FuelCharge.toLocaleString("en-IN")}
+                </IonCol>
+              </IonRow>
+              <IonRow>
+                <IonCol className="nameCol">
+                  Demand Surcharge (₹ {details.DemandSurchargePerKg}/Kg)
+                </IonCol>
+                <IonCol className="valueCol">
+                  (+) ₹{details.DemandSurcharge.toLocaleString("en-IN")}
+                </IonCol>
+              </IonRow>
+              <IonRow>
+                <IonCol className="nameCol">
+                  Green Tax (₹ {details.GreenTaxPerKg}/Kg)
+                </IonCol>
+                <IonCol className="valueCol">
+                  (+) ₹{details.GreenTax.toLocaleString("en-IN")}
+                </IonCol>
+              </IonRow>
+              {!props.showGst ? (
+                <IonRow className="totalRow">
+                  <IonCol className="nameCol">Total (without GST)</IonCol>
+                  <IonCol className="valueCol">
+                    ₹{details.Rate.toLocaleString("en-IN")}
+                  </IonCol>
+                </IonRow>
+              ) : (
+                <IonRow className="totalRow">
+                  <IonCol className="nameCol">Total (with 18% GST)</IonCol>
+                  <IonCol className="valueCol">
+                    ₹{details.GstRate.toLocaleString("en-IN")}
+                  </IonCol>
+                </IonRow>
+              )}
+            </IonGrid>
+          )}
+        </IonContent>
+      </IonModal>
     </>
   );
 };

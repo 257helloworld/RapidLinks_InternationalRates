@@ -44,7 +44,7 @@ const App: React.FC = () => (
         <Route exact path="/page">
           <Page />
         </Route>
-        <Route exact path="/rates">
+        <Route exact path="/rates/:parcelType">
           <Rates />
         </Route>
       </IonRouterOutlet>

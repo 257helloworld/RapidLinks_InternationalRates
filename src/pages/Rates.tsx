@@ -6,7 +6,6 @@ import {
   IonHeader,
   IonItem,
   IonList,
-  IonMenu,
   IonPage,
   IonTitle,
   IonToggle,
@@ -14,12 +13,17 @@ import {
 } from "@ionic/react";
 import RatesCard from "../components/RatesCard";
 import { useState } from "react";
+import { useParams } from "react-router-dom";
 
 const Rates: React.FC = () => {
   const [gst, setGst] = useState<boolean>(true);
   const handleGstToggle = (e: any) => {
     setGst(e.detail.checked);
   };
+
+  const { parcelType } = useParams<{ parcelType: any }>();
+  console.log("Parcel TYpe", parcelType);
+
   return (
     <>
       <IonPage id="main-content">
@@ -42,7 +46,9 @@ const Rates: React.FC = () => {
               </IonItem>
             </IonList>
           </div>
-          <RatesCard showGst={gst} />
+
+          {/* Rates Card */}
+          <RatesCard showGst={gst} parcelType={parcelType} />
         </IonContent>
       </IonPage>
     </>

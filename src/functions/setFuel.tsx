@@ -15,7 +15,7 @@ export default async function getFuel(network: string, percentage: any) {
       .all();
     const recordId = records[0].id;
     await base("Networks").update(recordId, {
-      Percentage: parseFloat(percentage),
+      FuelPercentage: parseFloat(percentage),
     });
   } catch (exception) {
     throw exception;

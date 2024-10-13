@@ -52,14 +52,26 @@ function AppTypeahead(props: any) {
     if (setSelectedValue !== undefined) {
       setSelectedValue(e.detail.value);
     }
-    const countryName = countries.find(
+    const foundCountry = countries.find(
       (item: any) => item.fields.Value === e.detail.value
-    )?.fields.Name;
+    );
+    const countryName = foundCountry?.fields.Name;
+    const demandSurchargePerKg = foundCountry?.fields.DHL_DemandSurcharge_PerKg;
+    const greenTax = foundCountry?.fields.DHL_GreenTax;
 
     const { onSelectionChange } = props;
     if (onSelectionChange !== undefined) {
       if (countryName !== undefined) {
-        onSelectionChange(countryName);
+        let countryNameFormatted = countryName
+          .split(" ")
+          .map(
+            (word: any) =>
+              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          )
+          .join(" ");
+        onSelectionChange(countryNameFormatted);
+        localStorage.setItem("DemandSurcharge_PerKg", demandSurchargePerKg);
+        localStorage.setItem("GreenTax", greenTax);
       }
     }
   };
@@ -134,7 +146,15 @@ function AppTypeahead(props: any) {
               {filteredItems.length > 0 &&
                 filteredItems.map((country: any) => (
                   <IonItem key={country.fields.Name}>
-                    <IonLabel>{country.fields.Name}</IonLabel>
+                    <IonLabel>
+                      {country.fields.Name.split(" ")
+                        .map(
+                          (word: any) =>
+                            word.charAt(0).toUpperCase() +
+                            word.slice(1).toLowerCase()
+                        )
+                        .join(" ")}
+                    </IonLabel>
                     <IonRadio
                       onClick={cancelChanges}
                       slot="start"

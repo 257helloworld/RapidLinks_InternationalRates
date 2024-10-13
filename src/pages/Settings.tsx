@@ -40,22 +40,12 @@ import {
   pencilOutline,
 } from "ionicons/icons";
 import { collection, onSnapshot } from "firebase/firestore";
-import db from "./firebase";
+import db from "../services/firebase";
 
 const Settings: React.FC = () => {
   const collectionRef = collection(db, "fuel");
   const [percentage, setPercentage] = useState<any>([]);
-  useEffect(() => {
-    const unsubscribe = onSnapshot(collectionRef, (snapshot) => {
-      const updatedDocuments = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setPercentage(updatedDocuments);
-    });
-
-    return () => unsubscribe();
-  }, []);
+  useEffect(() => {}, []);
   return (
     <>
       <IonPage id="main-content">
@@ -78,25 +68,7 @@ const Settings: React.FC = () => {
               <IonCardTitle>Fuel %</IonCardTitle>
             </IonCardHeader>
             <IonCardContent>
-              <IonList inset={false}>
-                {percentage.map((key: any) => (
-                  <IonItem>
-                    <IonInput
-                      label={key.network}
-                      value={key.percentage}
-                    ></IonInput>
-                    <IonButtons>
-                      <IonButton fill="clear">
-                        <IonIcon
-                          size="small"
-                          slot="icon-only"
-                          icon={createOutline}
-                        ></IonIcon>
-                      </IonButton>
-                    </IonButtons>
-                  </IonItem>
-                ))}
-              </IonList>
+              <IonList inset={false}></IonList>
 
               <IonButton
                 shape="round"
