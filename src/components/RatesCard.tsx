@@ -234,7 +234,7 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
   };
 
   const handleDetails = (data: any) => {
-    setDetails(data.details);
+    setDetails(data);
   };
 
   return (
@@ -243,18 +243,19 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
         {/* Card Header */}
         <IonCardHeader
           id="ratesCardHeader"
-          color={"primary"}
+          color={"tertiary"}
           className="cardHeader"
         >
-          <IonText>Parcel Type: {props.parcelType}</IonText>
-
-          <IonCardTitle style={{}}>
+          <IonCardTitle style={{ fontWeight: "bold", fontSize: "1.1rem" }}>
             {selectedCountry || "Not Selected"} ({weight} Kgs)
           </IonCardTitle>
         </IonCardHeader>
 
         <IonCardContent>
-          <IonGrid style={{ textAlign: "center" }}>
+          <IonBadge color={"dark"} className="parcelTypeBadge">
+            {props.parcelType === "NDox" ? "Non-Dox" : "Dox"}
+          </IonBadge>
+          <IonGrid style={{ textAlign: "center" }} className="ratesGrid">
             {/* <IonButton onClick={handleLoad}>Load</IonButton> */}
             <IonList>
               {/* HeaderRow */}
@@ -296,10 +297,11 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
                       }}
                       key={rate.fields.Network}
                     >
-                      <IonCol style={{ flex: "2" }}>
+                      <IonCol>
                         {rate.fields.Network}
                         <br />
                         <IonBadge
+                          color={"tertiary"}
                           style={{
                             margin: "9px 0 6px 0",
                             padding: "5px 10px",
@@ -309,7 +311,7 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
                         </IonBadge>
                       </IonCol>
 
-                      <IonCol style={{ flex: "1" }}>
+                      <IonCol>
                         {rate.fields.FuelPercentage}%<br />
                         <IonButton
                           fill={"clear"}
@@ -323,7 +325,7 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
                       </IonCol>
 
                       {props.showGst ? (
-                        <IonCol style={{ flex: "2" }}>
+                        <IonCol>
                           ₹{" "}
                           {rate.fields.details.GstRate.toLocaleString("en-IN")}
                           <br />
@@ -338,7 +340,7 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
                           </IonBadge>
                         </IonCol>
                       ) : (
-                        <IonCol style={{ flex: "2" }}>
+                        <IonCol>
                           ₹ {rate.fields.details.Rate.toLocaleString("en-IN")}
                           <br />
                           <IonBadge
@@ -348,12 +350,12 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
                               padding: "5px 10px",
                             }}
                           >
-                            GST Exclusive
+                            Without GST
                           </IonBadge>
                         </IonCol>
                       )}
 
-                      <IonCol style={{ flex: "1" }}>
+                      <IonCol>
                         <IonButton
                           fill={"clear"}
                           onClick={() => handleDetails(rate.fields)}
@@ -446,60 +448,63 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
             <IonGrid className="detailsGrid">
               <IonRow>
                 <IonCol>
-                  {selectedCountry} - {weight} Kgs
+                  {props.parcelType == "NDox" ? "Non-Dox" : "Dox"} <br />
+                  {details.Network} - {selectedCountry} -{" "}
+                  {details.details.ChargeableWeight} Kgs
                 </IonCol>
                 <IonCol className="valueCol">Value</IonCol>
               </IonRow>
               <IonRow>
                 <IonCol className="nameCol">Base Rate</IonCol>
                 <IonCol className="valueCol">
-                  ₹{details.BaseRate.toLocaleString("en-IN")}
+                  ₹ {details.details.BaseRate.toLocaleString("en-IN")}
                 </IonCol>
               </IonRow>
               <IonRow>
                 <IonCol className="nameCol">
-                  Commission ({details.CommissionPercentage}%)
+                  Commission ({details.details.CommissionPercentage}%)
                 </IonCol>
                 <IonCol className="valueCol">
-                  (+) ₹{details.Commission.toLocaleString("en-IN")}
+                  (+) ₹ {details.details.Commission.toLocaleString("en-IN")}
                 </IonCol>
               </IonRow>
               <IonRow>
                 <IonCol className="nameCol">
-                  Fuel Charge ({details.FuelPercentage}%)
+                  Fuel Charge ({details.details.FuelPercentage}%)
                 </IonCol>
                 <IonCol className="valueCol">
-                  (+) ₹{details.FuelCharge.toLocaleString("en-IN")}
+                  (+) ₹ {details.details.FuelCharge.toLocaleString("en-IN")}
                 </IonCol>
               </IonRow>
               <IonRow>
                 <IonCol className="nameCol">
-                  Demand Surcharge (₹ {details.DemandSurchargePerKg}/Kg)
+                  Demand Surcharge (₹ {details.details.DemandSurchargePerKg}/Kg)
                 </IonCol>
                 <IonCol className="valueCol">
-                  (+) ₹{details.DemandSurcharge.toLocaleString("en-IN")}
+                  (+) ₹{" "}
+                  {details.details.DemandSurcharge.toLocaleString("en-IN")}
                 </IonCol>
               </IonRow>
               <IonRow>
                 <IonCol className="nameCol">
-                  Green Tax (₹ {details.GreenTaxPerKg}/Kg)
+                  Green Tax (₹ {details.details.GreenTaxPerKg}/Kg)
                 </IonCol>
                 <IonCol className="valueCol">
-                  (+) ₹{details.GreenTax.toLocaleString("en-IN")}
+                  (+) ₹ {details.details.GreenTax.toLocaleString("en-IN")}
                 </IonCol>
               </IonRow>
               {!props.showGst ? (
                 <IonRow className="totalRow">
-                  <IonCol className="nameCol">Total (without GST)</IonCol>
+                  <IonCol>Total (without GST)</IonCol>
                   <IonCol className="valueCol">
-                    ₹{details.Rate.toLocaleString("en-IN")}
+                    ₹ {details.details.Rate.toLocaleString("en-IN")}
                   </IonCol>
                 </IonRow>
               ) : (
                 <IonRow className="totalRow">
-                  <IonCol className="nameCol">Total (with 18% GST)</IonCol>
+                  <IonCol>Total (with 18% GST)</IonCol>
                   <IonCol className="valueCol">
-                    ₹{details.GstRate.toLocaleString("en-IN")}
+                    ₹ {details.details.GstRate.toLocaleString("en-IN")}
                   </IonCol>
                 </IonRow>
               )}

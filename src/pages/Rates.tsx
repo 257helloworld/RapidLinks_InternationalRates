@@ -40,7 +40,11 @@ const Rates: React.FC = () => {
           <div style={{ marginTop: "15px" }}>
             <IonList inset={true}>
               <IonItem>
-                <IonToggle checked={gst} onIonChange={handleGstToggle}>
+                <IonToggle
+                  checked={gst}
+                  onIonChange={handleGstToggle}
+                  color={"tertiary"}
+                >
                   Include GST
                 </IonToggle>
               </IonItem>

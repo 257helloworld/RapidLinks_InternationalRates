@@ -144,7 +144,7 @@ const Home: React.FC = () => {
                   <IonLabel>Type</IonLabel>
                   <IonSelect
                     interface="popover"
-                    value={parcelType}
+                    color={"tertiary"}
                     slot="end"
                     onIonChange={(e) => {
                       setParcelType(e.detail.value);
@@ -187,11 +187,11 @@ const Home: React.FC = () => {
                 </IonList>
                 {weight > 0 && (
                   <IonButton
-                    shape="round"
                     id="resetButton"
                     expand="block"
                     routerLink={`/rates/${parcelType}`}
                     disabled={!isButtonEnabled}
+                    className="getRatesButton"
                   >
                     Get Rates
                   </IonButton>

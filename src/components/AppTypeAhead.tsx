@@ -156,6 +156,7 @@ function AppTypeahead(props: any) {
                         .join(" ")}
                     </IonLabel>
                     <IonRadio
+                      color={"tertiary"}
                       onClick={cancelChanges}
                       slot="start"
                       value={country.fields.Value}

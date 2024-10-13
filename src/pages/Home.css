@@ -28,3 +28,10 @@
 #weightErrorMessage {
   color: rgb(255, 107, 107);
 }
+
+.getRatesButton {
+  --background: var(--ion-color-tertiary);
+  --border-radius: 10px;
+  margin: 0 10px;
+  margin-bottom: 15px;
+}
