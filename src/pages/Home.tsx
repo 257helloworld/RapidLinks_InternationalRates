@@ -177,7 +177,9 @@ const Home: React.FC = () => {
                     ></IonInput>
                   </IonItem>
                   <IonItem lines="none">
-                    <p id="weightHelperText">Actual weight: {weight} KGs</p>
+                    <p id="weightHelperText">
+                      Chargeable weight: {ceilWeight} KGs
+                    </p>
                   </IonItem>
                   {!isWeightValid && (
                     <IonItem lines="none">

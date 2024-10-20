@@ -4,6 +4,7 @@ const getRates = async (
   network: any,
   weight: any,
   zone: any,
+  fuelPercentage: number,
   highestWeight: any,
   parcelType: string
 ) => {
@@ -32,21 +33,22 @@ const getRates = async (
       const nextWeight: any = records[i + 1].get("Weight");
 
       if (weight >= currentWeight && weight < nextWeight) {
-        let record = records[i];
-        let multiplierRecord = {
+        let record: any = records[i];
+        record = {
           ...record,
           fields: { ...record.fields, isMultiplier: true },
         };
-        return multiplierRecord;
+        // Calculate DHL Rate
+        return calculateDHLRate(record, zone, fuelPercentage, weight);
       }
     }
     // If weight is greater than or equal to the last weight, return the last record;
-    let record = records[records.length - 1];
-    let multiplierRecord = {
+    let record: any = records[records.length - 1];
+    record = {
       ...record,
       fields: { ...record.fields, isMultiplier: true },
     };
-    return multiplierRecord;
+    return calculateDHLRate(record, zone, fuelPercentage, weight);
   }
   const records = await table
     .select({
@@ -54,9 +56,65 @@ const getRates = async (
       filterByFormula: `{Weight}>=${weight}`,
     })
     .all();
-  console.log(records[0]);
-  let record = records[0];
-  return { ...record, fields: { ...record.fields, isMultiplier: false } };
+  let record: any = records[0];
+  record = { ...record, fields: { ...record.fields, isMultiplier: false } };
+  return calculateDHLRate(record, zone, fuelPercentage, weight);
 };
 
+const calculateDHLRate = (
+  record: any,
+  zone: any,
+  fuelPercentage: number,
+  weight: number
+) => {
+  // Get Base Rate from Zone
+  let rate = record.fields[zone];
+  // Get Chargeable Weight
+  const chargeableWeight = Math.ceil(weight);
+  // If Chargeable Weight is a Multiplier, multiply Base Rate by Chargeable Weight
+  if (record.fields.isMultiplier && chargeableWeight !== undefined) {
+    rate = rate * chargeableWeight;
+  }
+  let baseRate = rate;
+  // Add Fuel Surcharge
+  const fuelSurcharge = (rate * fuelPercentage) / 100;
+  rate = rate + fuelSurcharge;
+
+  // Add Demand Surcharge
+  const demandSurchargePerKg = Number(
+    localStorage.getItem("DemandSurcharge_PerKg") || "0"
+  );
+  const demandSurcharge = demandSurchargePerKg * chargeableWeight;
+  rate = rate + demandSurcharge;
+
+  // Add Green Tax
+  const greenTaxPerKg = Number(localStorage.getItem("GreenTax") || "0");
+  const greenTax = greenTaxPerKg * chargeableWeight;
+  rate = rate + greenTax;
+
+  // Add Commission
+  let commissionPercentage: number = 27;
+  const commission = (rate * commissionPercentage) / 100;
+  rate = rate + commission;
+
+  // Add 18 % GST
+  const gst = (rate * 18) / 100;
+
+  return {
+    BaseRate: baseRate,
+    Rate: rate,
+    CommissionPercentage: commissionPercentage,
+    Commission: commission,
+    GstRate: rate + gst,
+    ChargeableWeight: record.fields.isMultiplier
+      ? weight
+      : record.fields.Weight,
+    GreenTaxPerKg: greenTaxPerKg,
+    GreenTax: greenTax,
+    DemandSurchargePerKg: demandSurchargePerKg,
+    DemandSurcharge: demandSurcharge,
+    FuelPercentage: fuelPercentage,
+    FuelCharge: fuelSurcharge,
+  };
+};
 export default getRates;
