@@ -61,10 +61,11 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
   const calculationDetails: any = {
     DHL: [
       { value: "BaseRate", name: "Base Rate" },
-      { value: "FuelCharge", name: `Fuel Charge` },
       { value: "DemandSurcharge", name: "Demand Surcharge" },
       { value: "GreenTax", name: "Green Tax" },
-      { value: "Commission", name: "Commission" },
+      { value: "FuelCharge", name: `Fuel Charge` },
+      { value: "Commission", name: "RL - Extra" },
+      { value: "GST", name: "GST (18%)" },
       {
         value: props.showGst ? "GstRate" : "Rate",
         name: props.showGst ? "Total (with GST)" : "Total (without GST)",
@@ -418,17 +419,20 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
                 <IonCol className="valueCol">Value</IonCol>
               </IonRow>
 
-              {calculationDetails[details.Network].map((field: any) => (
-                <IonRow>
-                  <IonCol className="nameCol">{field.name}</IonCol>
-                  <IonCol className="valueCol">
-                    ₹{" "}
-                    {details.details[field.value]
-                      .toFixed(2)
-                      .toLocaleString("en-IN")}
-                  </IonCol>
-                </IonRow>
-              ))}
+              {calculationDetails[details.Network].map(
+                (field: any) =>
+                  (props.showGst || field.name !== "GST") && (
+                    <IonRow key={field.name}>
+                      <IonCol className="nameCol">{field.name}</IonCol>
+                      <IonCol className="valueCol">
+                        ₹{" "}
+                        {details.details[field.value]
+                          .toFixed(2)
+                          .toLocaleString("en-IN")}
+                      </IonCol>
+                    </IonRow>
+                  )
+              )}
             </IonGrid>
           )}
         </IonContent>

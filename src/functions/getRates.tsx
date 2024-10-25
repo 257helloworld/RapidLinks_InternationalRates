@@ -76,9 +76,6 @@ const calculateDHLRate = (
     rate = rate * chargeableWeight;
   }
   let baseRate = rate;
-  // Add Fuel Surcharge
-  const fuelSurcharge = (rate * fuelPercentage) / 100;
-  rate = rate + fuelSurcharge;
 
   // Add Demand Surcharge
   const demandSurchargePerKg = Number(
@@ -91,6 +88,10 @@ const calculateDHLRate = (
   const greenTaxPerKg = Number(localStorage.getItem("GreenTax") || "0");
   const greenTax = greenTaxPerKg * chargeableWeight;
   rate = rate + greenTax;
+
+  // Add Fuel Surcharge
+  const fuelSurcharge = (rate * fuelPercentage) / 100;
+  rate = rate + fuelSurcharge;
 
   // Add Commission
   let commissionPercentage: number = 27;
@@ -106,6 +107,7 @@ const calculateDHLRate = (
     CommissionPercentage: commissionPercentage,
     Commission: commission,
     GstRate: rate + gst,
+    GST: gst,
     ChargeableWeight: record.fields.isMultiplier
       ? weight
       : record.fields.Weight,
