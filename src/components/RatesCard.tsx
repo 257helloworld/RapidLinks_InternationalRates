@@ -65,7 +65,6 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
       { value: "GreenTax", name: "Green Tax" },
       { value: "FuelCharge", name: `Fuel Charge` },
       { value: "Commission", name: "RL - Extra" },
-      { value: "GST", name: "GST (18%)" },
       {
         value: props.showGst ? "GstRate" : "Rate",
         name: props.showGst ? "Total (with GST)" : "Total (without GST)",
