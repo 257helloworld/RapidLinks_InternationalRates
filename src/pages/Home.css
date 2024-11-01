@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap');
 
-* {
+*, ion-label {
   font-family: "Poppins", sans-serif;
   font-weight: 500;
 }

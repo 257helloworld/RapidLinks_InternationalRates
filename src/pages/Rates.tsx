@@ -13,13 +13,17 @@ import {
 } from "@ionic/react";
 import RatesCard from "../components/RatesCard";
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { Redirect, useParams } from "react-router-dom";
 
 const Rates: React.FC = () => {
   const [gst, setGst] = useState<boolean>(true);
   const handleGstToggle = (e: any) => {
     setGst(e.detail.checked);
   };
+
+  if (!localStorage.getItem("selectedCountry")) {
+    return <Redirect to="/" />;
+  }
 
   const { parcelType } = useParams<{ parcelType: any }>();
   console.log("Parcel TYpe", parcelType);

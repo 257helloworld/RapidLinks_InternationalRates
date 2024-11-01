@@ -47,6 +47,9 @@ const App: React.FC = () => (
         <Route exact path="/rates/:parcelType">
           <Rates />
         </Route>
+        <Route exact path="/rates">
+          <Redirect to="/home" />
+        </Route>
       </IonRouterOutlet>
     </IonReactRouter>
   </IonApp>

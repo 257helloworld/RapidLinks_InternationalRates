@@ -12,6 +12,7 @@ import {
   IonToolbar,
   IonRadio,
   IonRadioGroup,
+  IonSkeletonText,
 } from "@ionic/react";
 
 import React, { useEffect, useRef, useState } from "react";
@@ -106,9 +107,11 @@ function AppTypeahead(props: any) {
             {/* <IonButton onClick={confirmChanges}>Done</IonButton> */}
           </IonButtons>
         </IonToolbar>
-        <IonToolbar>
-          <IonSearchbar onIonInput={searchbarInput}></IonSearchbar>
-        </IonToolbar>
+        {loaded && (
+          <IonToolbar>
+            <IonSearchbar onIonInput={searchbarInput}></IonSearchbar>
+          </IonToolbar>
+        )}
       </IonHeader>
 
       <IonContent color="light">
@@ -121,7 +124,7 @@ function AppTypeahead(props: any) {
               display: "flex",
             }}
           >
-            <span style={{ margin: "auto" }}>Hang On! Loading...</span>
+            <span style={{ margin: "auto" }}>Loading...</span>
           </div>
         )}
 
@@ -146,7 +149,7 @@ function AppTypeahead(props: any) {
               {filteredItems.length > 0 &&
                 filteredItems.map((country: any) => (
                   <IonItem key={country.fields.Name}>
-                    <IonLabel>
+                    <IonLabel style={{ fontFamily: "Poppins" }}>
                       {country.fields.Name.split(" ")
                         .map(
                           (word: any) =>

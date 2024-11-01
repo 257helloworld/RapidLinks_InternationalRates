@@ -38,10 +38,10 @@ const Home: React.FC = () => {
   const [weight, setWeight] = useState(0);
   const [ceilWeight, setCeilWeight] = useState(0);
   const [selectedValue, setSelectedValue] = useState<string>();
-  const [isButtonEnabled, setIsButtonEnabled] = useState<boolean>(true);
+  const [isButtonEnabled, setIsButtonEnabled] = useState<boolean>(false);
   const [countries, setCountries] = useState<any>();
   const [parcelType, setParcelType] = useState<"Dox" | "NDox">("Dox");
-  const [isWeightValid, setIsWeightValid] = useState<boolean>(true);
+  const [isWeightValid, setIsWeightValid] = useState<boolean>(false);
   const [weightErrorMessage, setWeightErrorMessage] = useState<string>("");
 
   const modal = useRef<HTMLIonModalElement>(null);
@@ -51,6 +51,10 @@ const Home: React.FC = () => {
   const countrySelectionChanged = (country: string) => {
     setSelectedCountry(country);
     modal.current?.dismiss();
+  };
+
+  const onWeightInputClick = () => {
+    window.scrollTo(0, document.body.scrollHeight);
   };
 
   useEffect(() => {
@@ -78,6 +82,11 @@ const Home: React.FC = () => {
   };
 
   const validateWeight = (parcelType: string, weight: number) => {
+    if (weight <= 0) {
+      setIsWeightValid(false);
+      setWeightErrorMessage("Weight must be greater than 0 Kgs.");
+      return;
+    }
     if (parcelType == "NDox" || (parcelType == "Dox" && weight <= 2)) {
       setIsWeightValid(true);
     } else {
@@ -87,6 +96,7 @@ const Home: React.FC = () => {
   };
 
   useEffect(() => {
+    console.log(isWeightValid);
     setIsButtonEnabled(isWeightValid);
   }, [isWeightValid]);
 
@@ -141,8 +151,9 @@ const Home: React.FC = () => {
               </IonCardHeader>
               <IonCardContent>
                 <IonItem className="parcelTypeItem">
-                  <IonLabel>Type</IonLabel>
+                  <IonLabel style={{ fontFamily: "Poppins" }}>Type</IonLabel>
                   <IonSelect
+                    value={parcelType}
                     interface="popover"
                     color={"tertiary"}
                     slot="end"
@@ -173,31 +184,29 @@ const Home: React.FC = () => {
                       type="number"
                       placeholder="Weight"
                       value={weight}
+                      onClick={onWeightInputClick}
                       onIonInput={(e: any) => handleWeightInput(e)}
                     ></IonInput>
                   </IonItem>
                   <IonItem lines="none">
-                    <p id="weightHelperText">
-                      Chargeable weight: {ceilWeight} KGs
-                    </p>
+                    <p id="weightHelperText">Weight: {weight} KGs</p>
                   </IonItem>
-                  {!isWeightValid && (
+                  {!isWeightValid && weight != 0 && (
                     <IonItem lines="none">
                       <p id="weightErrorMessage">{weightErrorMessage}</p>
                     </IonItem>
                   )}
                 </IonList>
-                {weight > 0 && (
-                  <IonButton
-                    id="resetButton"
-                    expand="block"
-                    routerLink={`/rates/${parcelType}`}
-                    disabled={!isButtonEnabled}
-                    className="getRatesButton"
-                  >
-                    Get Rates
-                  </IonButton>
-                )}
+
+                <IonButton
+                  id="resetButton"
+                  expand="block"
+                  routerLink={`/rates/${parcelType}`}
+                  disabled={!isButtonEnabled}
+                  className="getRatesButton"
+                >
+                  Get Rates
+                </IonButton>
               </IonCardContent>
             </IonCard>
           )}

@@ -27,7 +27,11 @@ import {
   IonToolbar,
   useIonToast,
 } from "@ionic/react";
-import { createOutline, informationCircleOutline } from "ionicons/icons";
+import {
+  createOutline,
+  informationCircle,
+  informationCircleOutline,
+} from "ionicons/icons";
 import React, { useEffect, useState } from "react";
 import getRates from "../functions/getRates";
 import getFuel from "../functions/getFuel";
@@ -233,7 +237,7 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
               >
                 <IonCol>Network</IonCol>
                 <IonCol>Fuel</IonCol>
-                <IonCol>Rates</IonCol>
+                <IonCol>Rate</IonCol>
                 <IonCol>Details</IonCol>
               </IonItem>
 
@@ -293,7 +297,7 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
                           {rate.fields.details.GstRate.toLocaleString("en-IN")}
                           <br />
                           <IonBadge
-                            color={"success"}
+                            color={"tertiary"}
                             style={{
                               margin: "9px 0 6px 0",
                               padding: "5px 10px",
@@ -324,8 +328,8 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
                           onClick={() => handleDetails(rate.fields)}
                         >
                           <IonIcon
-                            color="success"
-                            icon={informationCircleOutline}
+                            color="medium"
+                            icon={informationCircle}
                           ></IonIcon>
                         </IonButton>
                       </IonCol>
