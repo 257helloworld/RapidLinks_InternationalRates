@@ -12,39 +12,31 @@ import {
   IonToolbar,
   IonRadio,
   IonRadioGroup,
-  IonSkeletonText,
 } from "@ionic/react";
 
 import React, { useEffect, useRef, useState } from "react";
-import getCountries from "../functions/getCountries";
 
 function AppTypeahead(props: any) {
-  const [countries, setCountries] = useState<any>();
-  const [loaded, setLoaded] = useState<boolean>();
+  const [loaded, setLoaded] = useState<boolean>(false);
   const [filteredItems, setFilteredItems] = useState<any>(props.items);
-  const modal = useRef<HTMLIonModalElement>(null);
-
+  const { countries } = props;
   useEffect(() => {
     setLoaded(false);
-    fetchCountries();
+    let data = countries;
+    setFilteredItems(data);
   }, []);
+
+  useEffect(() => {
+    if (countries) {
+      setFilteredItems(countries);
+      setLoaded(true);
+    }
+  }, [countries]);
 
   const cancelChanges = () => {
     const { onSelectionCancel } = props;
     if (onSelectionCancel !== undefined) {
       onSelectionCancel();
-    }
-  };
-
-  const fetchCountries = async () => {
-    try {
-      let data = await getCountries();
-      props.setCountries(data);
-      setCountries(data);
-      setFilteredItems(data);
-      setLoaded(true);
-    } catch (error) {
-      console.log(error);
     }
   };
 
@@ -103,9 +95,7 @@ function AppTypeahead(props: any) {
             <IonButton onClick={cancelChanges}>Cancel</IonButton>
           </IonButtons>
           <IonTitle>{props.title}</IonTitle>
-          <IonButtons slot="end">
-            {/* <IonButton onClick={confirmChanges}>Done</IonButton> */}
-          </IonButtons>
+          <IonButtons slot="end"></IonButtons>
         </IonToolbar>
         {loaded && (
           <IonToolbar>
@@ -134,7 +124,7 @@ function AppTypeahead(props: any) {
               onIonChange={(e) => onSelectedCountryChanged(e)}
               value={props.selectedValue}
             >
-              {filteredItems.length == 0 && (
+              {filteredItems && filteredItems.length == 0 && (
                 <div
                   style={{
                     height: "100%",
@@ -146,7 +136,8 @@ function AppTypeahead(props: any) {
                   <b style={{ margin: "auto" }}>No country found</b>
                 </div>
               )}
-              {filteredItems.length > 0 &&
+              {filteredItems &&
+                filteredItems.length > 0 &&
                 filteredItems.map((country: any) => (
                   <IonItem key={country.fields.Name}>
                     <IonLabel style={{ fontFamily: "Poppins" }}>

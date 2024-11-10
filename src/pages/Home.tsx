@@ -31,6 +31,7 @@ import "./Home.css";
 import { settingsOutline } from "ionicons/icons";
 // import { useStorage } from "../../hooks/useStorage";
 import AppTypeahead from "../components/AppTypeAhead";
+import getCountries from "../functions/getCountries";
 
 const Home: React.FC = () => {
   const [selectedCountry, setSelectedCountry] = useState<string>();
@@ -56,6 +57,15 @@ const Home: React.FC = () => {
   const onWeightInputClick = () => {
     window.scrollTo(0, document.body.scrollHeight);
   };
+
+  // Load countries on load
+  useEffect(() => {
+    const loadCountries = async () => {
+      let data = await getCountries();
+      setCountries(data);
+    };
+    loadCountries();
+  }, []);
 
   useEffect(() => {
     if (selectedCountry) {
@@ -213,9 +223,9 @@ const Home: React.FC = () => {
 
           <IonModal trigger="select-country" ref={modal}>
             <AppTypeahead
+              countries={countries}
               title="Select Country"
               selectedValue={selectedValue}
-              setCountries={setCountries}
               setSelectedValue={setSelectedValue}
               selectedItem={selectedCountry}
               onSelectionCancel={() => modal.current?.dismiss()}

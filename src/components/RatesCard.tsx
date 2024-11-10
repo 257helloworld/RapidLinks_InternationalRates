@@ -37,6 +37,7 @@ import getRates from "../functions/getRates";
 import getFuel from "../functions/getFuel";
 import setFuel from "../functions/setFuel";
 import "./RatesCard.css";
+import setFetchLog from "../functions/setFetchLog";
 
 interface RatesCardProps {
   showGst: boolean;
@@ -129,6 +130,12 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
             },
           });
         })
+      );
+      setFetchLog(
+        `${localStorage.getItem("selectedCountry")} - ${localStorage.getItem(
+          "weight"
+        )} Kg - ${props.parcelType}`,
+        JSON.stringify(data)
       );
       // data.sort(
       //   (a: any, b: any) => a.fields.details.Rate - b.fields.details.Rate
