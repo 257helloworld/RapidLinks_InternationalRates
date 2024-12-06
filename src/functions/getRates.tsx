@@ -94,7 +94,7 @@ const calculateDHLRate = (
   rate = rate + fuelSurcharge;
 
   // Add Commission
-  let commissionPercentage: number = 27;
+  let commissionPercentage: number = 25;
   const commission = (rate * commissionPercentage) / 100;
   rate = rate + commission;
 
