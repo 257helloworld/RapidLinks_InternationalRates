@@ -32,7 +32,7 @@ import {
   informationCircle,
   informationCircleOutline,
 } from "ionicons/icons";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import getRates from "../functions/getRates";
 import getFuel from "../functions/getFuel";
 import setFuel from "../functions/setFuel";
@@ -40,8 +40,9 @@ import "./RatesCard.css";
 import setFetchLog from "../functions/setFetchLog";
 
 interface RatesCardProps {
-  showGst: boolean;
+  // showGst: boolean;
   parcelType: string;
+  scroll: () => void;
 }
 
 const RatesCard: React.FC<RatesCardProps> = (props) => {
@@ -51,7 +52,6 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
   const [selectedCountry, setSelectedCountry] = useState<any>("");
   const [loaded, setLoaded] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [networks, setNetworks] = useState<any>([]);
   const [rates, setRates] = useState<any>([]);
   const [zone, setZone] = useState<any>();
   const [errorMessage, setErrorMessage] = useState<any>();
@@ -62,6 +62,7 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
   const [fuelUpdateLoading, setFuelUpdateLoading] = useState<any>(false);
   const [fuelUpdateMessage, setFuelUpdateMessage] = useState<any>("");
   const [details, setDetails] = useState<any>();
+  const [showGst, setShowGst] = useState(false);
 
   const calculationDetails: any = {
     DHL: [
@@ -69,10 +70,10 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
       { value: "DemandSurcharge", name: "Demand Surcharge" },
       { value: "GreenTax", name: "Green Tax" },
       { value: "FuelCharge", name: `Fuel Charge` },
-      { value: "Commission", name: "RL - Extra" },
+      { value: "Commission", name: "*Other Charges" },
       {
-        value: props.showGst ? "GstRate" : "Rate",
-        name: props.showGst ? "Total (with GST)" : "Total (without GST)",
+        value: showGst ? "GstRate" : "Rate",
+        name: showGst ? "Total (with GST)" : "Total (without GST)",
       },
     ],
   };
@@ -157,6 +158,7 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
   const handleLoad = async () => {
     setLoaded(false);
     await mergeRates();
+    props.scroll();
   };
 
   useEffect(() => {
@@ -229,6 +231,15 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
           <IonBadge color={"dark"} className="parcelTypeBadge">
             {props.parcelType === "NDox" ? "Non-Dox" : "Dox"}
           </IonBadge>
+          <IonItem>
+            <IonToggle
+              onIonChange={(e) => setShowGst(e?.detail?.checked)}
+              checked={showGst}
+              color={"tertiary"}
+            >
+              Include GST
+            </IonToggle>
+          </IonItem>
           <IonGrid style={{ textAlign: "center" }} className="ratesGrid">
             {/* <IonButton onClick={handleLoad}>Load</IonButton> */}
             <IonList>
@@ -298,7 +309,7 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
                         </IonButton>
                       </IonCol>
 
-                      {props.showGst ? (
+                      {showGst ? (
                         <IonCol>
                           ₹{" "}
                           {rate.fields.details.GstRate.toLocaleString("en-IN")}
@@ -348,6 +359,7 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
           </IonGrid>
         </IonCardContent>
       </IonCard>
+
       <IonAlert
         isOpen={isOpen}
         header={errorHeader}
@@ -431,7 +443,7 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
 
               {calculationDetails[details.Network].map(
                 (field: any) =>
-                  (props.showGst || field.name !== "GST") && (
+                  (showGst || field.name !== "GST") && (
                     <IonRow key={field.name}>
                       <IonCol className="nameCol">{field.name}</IonCol>
                       <IonCol className="valueCol">

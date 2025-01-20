@@ -1,7 +1,6 @@
 import {
   IonButton,
   IonButtons,
-  IonCheckbox,
   IonContent,
   IonHeader,
   IonItem,
@@ -14,12 +13,14 @@ import {
   IonRadioGroup,
 } from "@ionic/react";
 
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function AppTypeahead(props: any) {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [filteredItems, setFilteredItems] = useState<any>(props.items);
   const { countries } = props;
+  const countryInputRef = useRef<HTMLIonSearchbarElement>(null);
+
   useEffect(() => {
     setLoaded(false);
     let data = countries;
@@ -74,7 +75,6 @@ function AppTypeahead(props: any) {
   };
 
   const filterList = (searchQuery: string | null | undefined) => {
-    console.log("searching");
     if (searchQuery === undefined || searchQuery === null) {
       setFilteredItems(countries);
     } else {
@@ -99,7 +99,10 @@ function AppTypeahead(props: any) {
         </IonToolbar>
         {loaded && (
           <IonToolbar>
-            <IonSearchbar onIonInput={searchbarInput}></IonSearchbar>
+            <IonSearchbar
+              ref={countryInputRef}
+              onIonInput={searchbarInput}
+            ></IonSearchbar>
           </IonToolbar>
         )}
       </IonHeader>
@@ -133,7 +136,9 @@ function AppTypeahead(props: any) {
                     display: "flex",
                   }}
                 >
-                  <b style={{ margin: "auto" }}>No country found</b>
+                  <p style={{ margin: "10px auto" }}>
+                    No Country as '{countryInputRef?.current?.value}'
+                  </p>
                 </div>
               )}
               {filteredItems &&
