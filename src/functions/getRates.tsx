@@ -14,23 +14,47 @@ const getRates = async (
   const base = airtable.base("apph8kU8Y2EQFTEYb");
 
   let table: Airtable.Table<any>;
+  let records: any;
+
   if (network == "DHL") {
     table = base(`DHL_${parcelType}`);
+    // LocalStorage Caching
+    let LSData: any = JSON.parse(
+      localStorage.getItem(`DHL_${parcelType}`) as string
+    );
+    let cacheTimestamp = LSData?.timestamp;
+    if (LSData != null && !isOlderThanOneDay(cacheTimestamp)) {
+      records = LSData?.records;
+      console.log("cached returned");
+    }
+    // Fetch from airtable if cache not available or expired.
+    else {
+      const airtableRecords = await table
+        .select({
+          sort: [{ field: "Weight", direction: "asc" }],
+        })
+        .all();
+      let newData = {
+        timestamp: new Date().getTime(),
+        records: airtableRecords,
+      };
+      records = airtableRecords;
+      console.log("airtable returned");
+      localStorage.setItem(`DHL_${parcelType}`, JSON.stringify(newData));
+    }
   } else {
     table = base(network);
   }
 
   if (weight > highestWeight) {
+    // For Multiplier Charges
     weight = Math.ceil(weight);
-    const records = await table
-      .select({
-        sort: [{ field: "Weight", direction: "asc" }],
-        filterByFormula: `{Weight}>=${highestWeight}`,
-      })
-      .all();
+    records = records.filter(
+      (record: any) => record.fields.Weight >= highestWeight
+    );
     for (let i = 0; i < records.length - 1; i++) {
-      const currentWeight: any = records[i].get("Weight");
-      const nextWeight: any = records[i + 1].get("Weight");
+      const currentWeight: any = records[i].Weight;
+      const nextWeight: any = records[i + 1].Weight;
 
       if (weight >= currentWeight && weight < nextWeight) {
         let record: any = records[i];
@@ -50,12 +74,8 @@ const getRates = async (
     };
     return calculateDHLRate(record, zone, fuelPercentage, weight);
   }
-  const records = await table
-    .select({
-      sort: [{ field: "Weight", direction: "asc" }],
-      filterByFormula: `{Weight}>=${weight}`,
-    })
-    .all();
+  // For Non-Multiplier Charges.
+  records = records.filter((record: any) => record.fields.Weight >= weight);
   let record: any = records[0];
   record = { ...record, fields: { ...record.fields, isMultiplier: false } };
   return calculateDHLRate(record, zone, fuelPercentage, weight);
@@ -78,11 +98,11 @@ const calculateDHLRate = (
   let baseRate = rate;
 
   // Add Demand Surcharge
-  const demandSurchargePerKg = Number(
-    localStorage.getItem("DemandSurcharge_PerKg") || "0"
-  );
-  const demandSurcharge = demandSurchargePerKg * chargeableWeight;
-  rate = rate + demandSurcharge;
+  // const demandSurchargePerKg = Number(
+  //   localStorage.getItem("DemandSurcharge_PerKg") || "0"
+  // );
+  // const demandSurcharge = demandSurchargePerKg * chargeableWeight;
+  // rate = rate + demandSurcharge;
 
   // Add Green Tax
   const greenTaxPerKg = Number(localStorage.getItem("GreenTax") || "0");
@@ -113,10 +133,17 @@ const calculateDHLRate = (
       : record.fields.Weight,
     GreenTaxPerKg: greenTaxPerKg,
     GreenTax: greenTax,
-    DemandSurchargePerKg: demandSurchargePerKg,
-    DemandSurcharge: demandSurcharge,
+    // DemandSurchargePerKg: demandSurchargePerKg,
+    // DemandSurcharge: demandSurcharge,
     FuelPercentage: fuelPercentage,
     FuelCharge: fuelSurcharge,
   };
+};
+
+const isOlderThanOneDay = (timestamp: any) => {
+  let currentTimestamp = new Date().getTime();
+  let difference = Math.abs(currentTimestamp - timestamp);
+  let differenceInHours = difference / 1000 / 60 / 60;
+  return differenceInHours >= 24 ? true : false;
 };
 export default getRates;

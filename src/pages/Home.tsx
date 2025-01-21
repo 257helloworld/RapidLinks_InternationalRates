@@ -213,7 +213,7 @@ const Home: React.FC = () => {
                 {selectedCountry && (
                   <IonCard className="cards" style={{ marginTop: "20px" }}>
                     <IonCardHeader className="cardHeader">
-                      <IonCardTitle>Enter Weight</IonCardTitle>
+                      <IonCardTitle>Enter Weight (in Kgs)</IonCardTitle>
                     </IonCardHeader>
                     <IonCardContent>
                       <IonList>

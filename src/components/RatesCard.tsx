@@ -66,8 +66,8 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
 
   const calculationDetails: any = {
     DHL: [
-      { value: "BaseRate", name: "Base Rate" },
-      { value: "DemandSurcharge", name: "Demand Surcharge" },
+      { value: "BaseRate", name: "Base Freight" },
+      // { value: "DemandSurcharge", name: "Demand Surcharge" },
       { value: "GreenTax", name: "Green Tax" },
       { value: "FuelCharge", name: `Fuel Charge` },
       { value: "Commission", name: "*Other Charges" },
