@@ -130,7 +130,6 @@ const Home: React.FC = () => {
   };
 
   useEffect(() => {
-    console.log(isWeightValid);
     setIsButtonEnabled(isWeightValid);
   }, [isWeightValid]);
 

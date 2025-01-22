@@ -26,7 +26,6 @@ const Rates: React.FC = () => {
   }
 
   const { parcelType } = useParams<{ parcelType: any }>();
-  console.log("Parcel TYpe", parcelType);
 
   return (
     <>
@@ -56,7 +55,7 @@ const Rates: React.FC = () => {
           </div>
 
           {/* Rates Card */}
-          <RatesCard showGst={gst} parcelType={parcelType} />
+          {/* <RatesCard showGst={gst} parcelType={parcelType} /> */}
         </IonContent>
       </IonPage>
     </>

@@ -16,7 +16,6 @@ export default async function getCountries() {
     const lastUpdatedDate = localStorage.getItem("lastUpdatedDate");
 
     if (cachedCountries && lastUpdatedDate && isToday(lastUpdatedDate)) {
-      console.log("fetched from cache");
       return JSON.parse(cachedCountries);
     }
 
@@ -26,7 +25,6 @@ export default async function getCountries() {
     const base = airtable.base("apph8kU8Y2EQFTEYb");
     const table = base("Countries");
 
-    console.log("fetched from server");
     const records = await table
       .select({
         sort: [{ field: "Name", direction: "asc" }],

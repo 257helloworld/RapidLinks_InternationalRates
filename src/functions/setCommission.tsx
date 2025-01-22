@@ -1,6 +1,6 @@
 import Airtable from "airtable";
 
-export default async function setFuel(network: string, percentage: any) {
+export default async function setCommission(network: string, percentage: any) {
   try {
     const airtable = new Airtable({
       apiKey: import.meta.env.VITE_AIRTABLE_PERSONAL_ACCESS_TOKEN,
@@ -15,7 +15,7 @@ export default async function setFuel(network: string, percentage: any) {
       .all();
     const recordId = records[0].id;
     await base("Networks").update(recordId, {
-      FuelPercentage: parseFloat(percentage),
+      CommissionPercentage: parseFloat(percentage),
     });
   } catch (exception) {
     throw exception;

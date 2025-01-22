@@ -5,6 +5,7 @@ const getRates = async (
   weight: any,
   zone: any,
   fuelPercentage: number,
+  commissionPercentage: number,
   highestWeight: any,
   parcelType: string
 ) => {
@@ -25,7 +26,6 @@ const getRates = async (
     let cacheTimestamp = LSData?.timestamp;
     if (LSData != null && !isOlderThanOneDay(cacheTimestamp)) {
       records = LSData?.records;
-      console.log("cached returned");
     }
     // Fetch from airtable if cache not available or expired.
     else {
@@ -39,7 +39,6 @@ const getRates = async (
         records: airtableRecords,
       };
       records = airtableRecords;
-      console.log("airtable returned");
       localStorage.setItem(`DHL_${parcelType}`, JSON.stringify(newData));
     }
   } else {
@@ -50,11 +49,11 @@ const getRates = async (
     // For Multiplier Charges
     weight = Math.ceil(weight);
     records = records.filter(
-      (record: any) => record.fields.Weight >= highestWeight
+      (record: any) => record.fields.Weight > highestWeight
     );
     for (let i = 0; i < records.length - 1; i++) {
-      const currentWeight: any = records[i].Weight;
-      const nextWeight: any = records[i + 1].Weight;
+      const currentWeight: any = records[i].fields.Weight;
+      const nextWeight: any = records[i + 1].fields.Weight;
 
       if (weight >= currentWeight && weight < nextWeight) {
         let record: any = records[i];
@@ -63,7 +62,13 @@ const getRates = async (
           fields: { ...record.fields, isMultiplier: true },
         };
         // Calculate DHL Rate
-        return calculateDHLRate(record, zone, fuelPercentage, weight);
+        return calculateDHLRate(
+          record,
+          zone,
+          fuelPercentage,
+          commissionPercentage,
+          weight
+        );
       }
     }
     // If weight is greater than or equal to the last weight, return the last record;
@@ -72,19 +77,32 @@ const getRates = async (
       ...record,
       fields: { ...record.fields, isMultiplier: true },
     };
-    return calculateDHLRate(record, zone, fuelPercentage, weight);
+    return calculateDHLRate(
+      record,
+      zone,
+      fuelPercentage,
+      commissionPercentage,
+      weight
+    );
   }
   // For Non-Multiplier Charges.
   records = records.filter((record: any) => record.fields.Weight >= weight);
   let record: any = records[0];
   record = { ...record, fields: { ...record.fields, isMultiplier: false } };
-  return calculateDHLRate(record, zone, fuelPercentage, weight);
+  return calculateDHLRate(
+    record,
+    zone,
+    fuelPercentage,
+    commissionPercentage,
+    weight
+  );
 };
 
 const calculateDHLRate = (
   record: any,
   zone: any,
   fuelPercentage: number,
+  commissionPercentage: number,
   weight: number
 ) => {
   // Get Base Rate from Zone
@@ -104,17 +122,16 @@ const calculateDHLRate = (
   // const demandSurcharge = demandSurchargePerKg * chargeableWeight;
   // rate = rate + demandSurcharge;
 
+  // Add Fuel Surcharge
+  const fuelSurcharge = (rate * fuelPercentage) / 100;
+  rate = rate + fuelSurcharge;
+
   // Add Green Tax
   const greenTaxPerKg = Number(localStorage.getItem("GreenTax") || "0");
   const greenTax = greenTaxPerKg * chargeableWeight;
   rate = rate + greenTax;
 
-  // Add Fuel Surcharge
-  const fuelSurcharge = (rate * fuelPercentage) / 100;
-  rate = rate + fuelSurcharge;
-
   // Add Commission
-  let commissionPercentage: number = 25;
   const commission = (rate * commissionPercentage) / 100;
   rate = rate + commission;
 
@@ -124,7 +141,7 @@ const calculateDHLRate = (
   return {
     BaseRate: baseRate,
     Rate: rate,
-    CommissionPercentage: commissionPercentage,
+    CommissionPercentage: record.fields.CommissionPercentage,
     Commission: commission,
     GstRate: rate + gst,
     GST: gst,

@@ -38,6 +38,7 @@ import getFuel from "../functions/getFuel";
 import setFuel from "../functions/setFuel";
 import "./RatesCard.css";
 import setFetchLog from "../functions/setFetchLog";
+import setCommission from "../functions/setCommission";
 
 interface RatesCardProps {
   // showGst: boolean;
@@ -59,17 +60,19 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
   const [isFuelChangeOpen, setIsFuelChangeOpen] = useState<any>(false);
   const [editingNetwork, setEditingNetwork] = useState<any>(true);
   const [oldFuel, setOldFuel] = useState<any>(0);
+  const [oldCommission, setOldCommission] = useState<number>(0);
   const [fuelUpdateLoading, setFuelUpdateLoading] = useState<any>(false);
   const [fuelUpdateMessage, setFuelUpdateMessage] = useState<any>("");
   const [details, setDetails] = useState<any>();
   const [showGst, setShowGst] = useState(false);
+  const [isCommissionOpen, setIsCommissionOpen] = useState<boolean>(false);
 
   const calculationDetails: any = {
     DHL: [
       { value: "BaseRate", name: "Base Freight" },
       // { value: "DemandSurcharge", name: "Demand Surcharge" },
-      { value: "GreenTax", name: "Green Tax" },
       { value: "FuelCharge", name: `Fuel Charge` },
+      { value: "GreenTax", name: "Green Tax" },
       { value: "Commission", name: "*Other Charges" },
       {
         value: showGst ? "GstRate" : "Rate",
@@ -83,6 +86,7 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
     weight: number,
     zone: string,
     fuelPercentage: number,
+    commissionPercentage: number,
     highestWeight: number,
     parcelType: string
   ) => {
@@ -92,6 +96,7 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
         weight,
         zone,
         fuelPercentage,
+        commissionPercentage,
         highestWeight,
         parcelType
       );
@@ -119,10 +124,10 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
             Number(localStorage.getItem("weight") || "0"),
             localStorage.getItem("selectedCountryZone") || "",
             item.fields.FuelPercentage,
+            item.fields.CommissionPercentage,
             item.fields.HighestWeight,
             props.parcelType
           );
-          console.log("fetched results", details);
           data.push({
             ...item,
             fields: {
@@ -142,7 +147,6 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
       //   (a: any, b: any) => a.fields.details.Rate - b.fields.details.Rate
       // );
       setRates(data);
-      console.log("merged rates", data);
       setIsOpen(false);
       setLoaded(true);
     } catch (error: any) {
@@ -172,7 +176,12 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
     setEditingNetwork(e.Network);
     setOldFuel(e.FuelPercentage);
     setIsFuelChangeOpen(true);
-    console.log(e);
+  };
+
+  const handleCommissionEdit = (e: any) => {
+    setEditingNetwork(e.Network);
+    setOldCommission(e.CommissionPercentage);
+    setIsCommissionOpen(true);
   };
 
   const fuelUpdateHandler = async (data: any) => {
@@ -196,6 +205,40 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
         handleLoad();
       } else {
         throw new Error("Ivalid value for fuel.");
+      }
+    } catch (exception: any) {
+      setFuelUpdateLoading(false);
+      console.log(exception.message);
+      fuelUpdateErrorToast({
+        message: exception.message,
+        duration: 3000,
+        position: "bottom",
+        color: "danger",
+      });
+    }
+  };
+
+  const commissionUpdateHandler = async (data: any) => {
+    try {
+      if (oldCommission === data.newCommission) {
+        return;
+      }
+      if (data.newCommission >= 0 && data.newCommission <= 100) {
+        setFuelUpdateLoading(true);
+        setFuelUpdateMessage(
+          "Updating * of " +
+            editingNetwork +
+            " from " +
+            oldCommission +
+            "% to " +
+            data.newCommission +
+            "%"
+        );
+        await setCommission(editingNetwork, data.newCommission);
+        setFuelUpdateLoading(false);
+        handleLoad();
+      } else {
+        throw new Error("Ivalid value for *.");
       }
     } catch (exception: any) {
       setFuelUpdateLoading(false);
@@ -255,8 +298,9 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
               >
                 <IonCol>Network</IonCol>
                 <IonCol>Fuel</IonCol>
+                <IonCol>*</IonCol>
                 <IonCol>Rate</IonCol>
-                <IonCol>Details</IonCol>
+                <IonCol></IonCol>
               </IonItem>
 
               {/* Skeleton View */}
@@ -309,37 +353,35 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
                         </IonButton>
                       </IonCol>
 
-                      {showGst ? (
-                        <IonCol>
-                          ₹{" "}
-                          {rate.fields.details.GstRate.toLocaleString("en-IN")}
-                          <br />
-                          <IonBadge
-                            color={"tertiary"}
-                            style={{
-                              margin: "9px 0 6px 0",
-                              padding: "5px 10px",
-                            }}
-                          >
-                            GST Inclusive
-                          </IonBadge>
-                        </IonCol>
-                      ) : (
-                        <IonCol>
-                          ₹ {rate.fields.details.Rate.toLocaleString("en-IN")}
-                          <br />
-                          <IonBadge
-                            color={"warning"}
-                            style={{
-                              margin: "9px 0 6px 0",
-                              padding: "5px 10px",
-                            }}
-                          >
-                            Without GST
-                          </IonBadge>
-                        </IonCol>
-                      )}
+                      <IonCol>
+                        {rate.fields.CommissionPercentage}%<br />
+                        <IonButton
+                          fill={"clear"}
+                          onClick={() => handleCommissionEdit(rate.fields)}
+                        >
+                          <IonIcon
+                            color={"medium"}
+                            icon={createOutline}
+                          ></IonIcon>
+                        </IonButton>
+                      </IonCol>
 
+                      <IonCol>
+                        ₹{" "}
+                        {showGst
+                          ? rate.fields.details.GstRate.toLocaleString("en-IN")
+                          : rate.fields.details.Rate.toLocaleString("en-IN")}
+                        <br />
+                        <IonBadge
+                          color={showGst ? "tertiary" : "warning"}
+                          style={{
+                            margin: "9px 0 6px 0",
+                            padding: "5px 10px",
+                          }}
+                        >
+                          {showGst ? "GST Inclusive" : "Without GST"}
+                        </IonBadge>
+                      </IonCol>
                       <IonCol>
                         <IonButton
                           fill={"clear"}
@@ -407,6 +449,39 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
           },
         ]}
         onDidDismiss={() => setIsFuelChangeOpen(false)}
+      ></IonAlert>
+
+      <IonAlert
+        isOpen={isCommissionOpen}
+        header={`* for ${editingNetwork}`}
+        animated={true}
+        backdropDismiss={false}
+        message={"Current *: " + oldCommission + "%"}
+        inputs={[
+          {
+            name: "newCommission",
+            type: "number",
+            placeholder: "New Percentage",
+            min: 0,
+            max: 100,
+          },
+        ]}
+        buttons={[
+          {
+            text: "Cancel",
+            handler: () => {
+              // handleLoad();
+              setIsOpen(false);
+            },
+          },
+          {
+            text: "Update",
+            handler: (data) => {
+              commissionUpdateHandler(data);
+            },
+          },
+        ]}
+        onDidDismiss={() => setIsCommissionOpen(false)}
       ></IonAlert>
 
       <IonLoading
