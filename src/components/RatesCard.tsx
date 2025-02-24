@@ -54,7 +54,6 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
   const [loaded, setLoaded] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [rates, setRates] = useState<any>([]);
-  const [zone, setZone] = useState<any>();
   const [errorMessage, setErrorMessage] = useState<any>();
   const [errorHeader, setErrorHeader] = useState<any>();
   const [isFuelChangeOpen, setIsFuelChangeOpen] = useState<any>(false);
@@ -79,12 +78,23 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
         name: showGst ? "Total (with GST)" : "Total (without GST)",
       },
     ],
+    Fedex: [
+      { value: "BaseRate", name: "Base Freight" },
+      { value: "DemandSurcharge", name: "Demand Surcharge" },
+      { value: "FuelCharge", name: `Fuel Charge` },
+      // { value: "GreenTax", name: "Green Tax" },
+      { value: "Commission", name: "*Other Charges" },
+      {
+        value: showGst ? "GstRate" : "Rate",
+        name: showGst ? "Total (with GST)" : "Total (without GST)",
+      },
+    ],
   };
 
   const fetchRates = async (
     network: string,
     weight: number,
-    zone: string,
+    zones: object,
     fuelPercentage: number,
     commissionPercentage: number,
     highestWeight: number,
@@ -94,7 +104,7 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
       let record = await getRates(
         network,
         weight,
-        zone,
+        zones,
         fuelPercentage,
         commissionPercentage,
         highestWeight,
@@ -117,12 +127,13 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
         return;
       }
       const data: any = [];
+      let zones = JSON.parse(localStorage.getItem("selectedCountryZone") || "");
       await Promise.all(
         fuel.map(async (item: any) => {
           const details = await fetchRates(
             item.fields.Network,
             Number(localStorage.getItem("weight") || "0"),
-            localStorage.getItem("selectedCountryZone") || "",
+            zones,
             item.fields.FuelPercentage,
             item.fields.CommissionPercentage,
             item.fields.HighestWeight,
@@ -166,7 +177,6 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
   };
 
   useEffect(() => {
-    setZone(localStorage.getItem("selectedCountryZone"));
     setSelectedCountry(localStorage.getItem("selectedCountry"));
     setWeight(localStorage.getItem("weight"));
     handleLoad();
@@ -186,8 +196,11 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
 
   const fuelUpdateHandler = async (data: any) => {
     try {
-      if (oldFuel === data.newFuel) {
-        return;
+      if (oldFuel == data.newFuel) {
+        throw new Error("Old percenage & New percentage are same.");
+      }
+      if (data.newFuel === "") {
+        throw new Error("Percentage cannot be blank.");
       }
       if (data.newFuel >= 0 && data.newFuel <= 100) {
         setFuelUpdateLoading(true);
@@ -201,6 +214,8 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
             "%"
         );
         await setFuel(editingNetwork, data.newFuel);
+        (document.getElementById("newFuelInput") as HTMLIonInputElement).value =
+          "";
         setFuelUpdateLoading(false);
         handleLoad();
       } else {
@@ -220,8 +235,11 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
 
   const commissionUpdateHandler = async (data: any) => {
     try {
-      if (oldCommission === data.newCommission) {
-        return;
+      if (oldCommission == data.newCommission) {
+        throw new Error("Old percentage & New percentage are same.");
+      }
+      if (data.newCommission === "") {
+        throw new Error("Percentage cannot be blank.");
       }
       if (data.newCommission >= 0 && data.newCommission <= 100) {
         setFuelUpdateLoading(true);
@@ -235,12 +253,16 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
             "%"
         );
         await setCommission(editingNetwork, data.newCommission);
+        (
+          document.getElementById("newCommissionInput") as HTMLIonInputElement
+        ).value = "";
         setFuelUpdateLoading(false);
         handleLoad();
       } else {
         throw new Error("Ivalid value for *.");
       }
     } catch (exception: any) {
+      console.log("Exception Caught");
       setFuelUpdateLoading(false);
       console.log(exception.message);
       fuelUpdateErrorToast({
@@ -431,6 +453,7 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
             placeholder: "New Fuel",
             min: 0,
             max: 100,
+            id: "newFuelInput",
           },
         ]}
         buttons={[
@@ -464,6 +487,7 @@ const RatesCard: React.FC<RatesCardProps> = (props) => {
             placeholder: "New Percentage",
             min: 0,
             max: 100,
+            id: "newCommissionInput",
           },
         ]}
         buttons={[

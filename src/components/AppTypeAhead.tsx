@@ -50,7 +50,10 @@ function AppTypeahead(props: any) {
       (item: any) => item.fields.Value === e.detail.value
     );
     const countryName = foundCountry?.fields.Name;
-    const demandSurchargePerKg = foundCountry?.fields.DHL_DemandSurcharge_PerKg;
+    const demandSurchargePerKg = {
+      DHL: foundCountry?.fields.DHL_DemandSurcharge_PerKg,
+      Fedex: foundCountry?.fields.Fedex_DemandSurcharge_PerKg,
+    };
     const greenTax = foundCountry?.fields.DHL_GreenTax;
 
     const { onSelectionChange } = props;
@@ -64,7 +67,10 @@ function AppTypeahead(props: any) {
           )
           .join(" ");
         onSelectionChange(countryNameFormatted);
-        localStorage.setItem("DemandSurcharge_PerKg", demandSurchargePerKg);
+        localStorage.setItem(
+          "DemandSurcharge_PerKg",
+          JSON.stringify(demandSurchargePerKg)
+        );
         localStorage.setItem("GreenTax", greenTax);
       }
     }

@@ -88,10 +88,14 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     if (selectedValue) {
-      let zone = countries.find(
+      let zoneFields = countries.find(
         (item: any) => item.fields.Value === selectedValue
-      )?.fields.Zone;
-      localStorage.setItem("selectedCountryZone", zone);
+      );
+      let zones = {
+        DHL_Zone: zoneFields?.fields?.DHL_Zone,
+        Fedex_Zone: zoneFields?.fields?.Fedex_Zone,
+      };
+      localStorage.setItem("selectedCountryZone", JSON.stringify(zones));
     }
   }, [selectedValue]);
 
@@ -110,11 +114,13 @@ const Home: React.FC = () => {
       setWeightErrorMessage("Weight must be greater than 0 Kgs.");
       return;
     }
-    if (parcelType == "NDox" || (parcelType == "Dox" && weight <= 2)) {
+    if (parcelType == "NDox" || (parcelType == "Dox" && weight <= 2.5)) {
       setIsWeightValid(true);
     } else {
       setIsWeightValid(false);
-      setWeightErrorMessage("Weight must be below or equal to 2 Kgs for Dox.");
+      setWeightErrorMessage(
+        "Weight must be below or equal to 2.5 Kgs for Dox."
+      );
     }
   };
 
